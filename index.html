@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RetourMatch — Rapprochement avoirs grossiste</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f5f7;--surface:#fff;--border:#e5e7eb;--border2:#d1d5db;
+  --text:#111827;--text2:#6b7280;--text3:#9ca3af;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-light:#dcfce7;--green-text:#15803d;
+  --amber:#d97706;--amber-bg:#fffbeb;--amber-text:#92400e;
+  --red:#dc2626;--red-bg:#fef2f2;--red-text:#991b1b;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-light:#dbeafe;--blue-text:#1e40af;
+  --radius:8px;--radius-lg:12px;--shadow:0 1px 3px rgba(0,0,0,.08);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:var(--text);background:var(--bg);min-height:100vh}
+.topbar{display:flex;align-items:center;gap:10px;padding:0 20px;height:52px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.logo{font-size:16px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:6px}
+.logo-badge{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--green-bg);color:var(--green-text);font-weight:500;border:1px solid #bbf7d0}
+.topbar-right{margin-left:auto;display:flex;gap:8px}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;gap:0;overflow-x:auto}
+.tab{padding:11px 16px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);white-space:nowrap;transition:.15s;display:flex;align-items:center;gap:5px}
+.tab.active{color:var(--text);border-bottom-color:var(--green);font-weight:500}
+.tab:hover:not(.active){color:var(--text);background:var(--bg)}
+.tcnt{font-size:10px;padding:1px 6px;border-radius:8px;background:#f3f4f6;color:var(--text2)}
+.tab.active .tcnt{background:#dcfce7;color:var(--green-text)}
+.main{padding:20px;max-width:1300px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.metric-label{font-size:11px;color:var(--text2);margin-bottom:6px}
+.metric-val{font-size:22px;font-weight:600}
+.mv-blue{color:var(--blue)}.mv-green{color:var(--green)}.mv-amber{color:var(--amber)}.mv-red{color:var(--red)}
+.doc-panels{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.doc-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.panel-header{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:#fafafa}
+.panel-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600}
+.pb-r{background:var(--green-light);color:#166534}
+.pb-a{background:var(--blue-light);color:var(--blue-text)}
+.panel-body{padding:12px 14px}
+.doc-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f9fafb;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:5px;font-size:12px;cursor:pointer;transition:.15s}
+.doc-item:hover{border-color:var(--border2);background:#f0f0f0}
+.doc-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.doc-st{font-size:10px;padding:2px 7px;border-radius:10px}
+.ds-ready{background:#f0fdf4;color:#16a34a}
+.ds-loading{background:#fffbeb;color:#d97706}
+.ds-done{background:#dbeafe;color:var(--blue-text)}
+.ds-err{background:#fee2e2;color:#dc2626}
+.doc-rm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:15px;padding:0 2px;line-height:1}
+.doc-rm:hover{color:var(--red)}
+.upload-drop{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:20px;text-align:center;cursor:pointer;transition:.15s;background:#fafafa;margin-bottom:10px}
+.upload-drop:hover,.upload-drop.drag{border-color:var(--green);background:var(--green-bg)}
+.upload-drop.has-files{border-color:#86efac;border-style:solid}
+.action-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.abt{display:flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;transition:.15s;font-family:inherit}
+.abt:hover{border-color:var(--green);color:var(--green-text);background:var(--green-bg)}
+.notify{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:12px;border-left:3px solid}
+.n-info{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue)}
+.n-ok{background:var(--green-bg);color:var(--green-text);border-color:var(--green)}
+.n-warn{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber)}
+.n-err{background:var(--red-bg);color:var(--red-text);border-color:var(--red)}
+.prog-bar{height:5px;background:#e5e7eb;border-radius:3px;overflow:hidden;margin:6px 0}
+.prog-fill{height:100%;border-radius:3px;background:var(--green);transition:.4s}
+.step-log{font-size:11px;font-family:monospace;color:var(--text2);line-height:1.9;max-height:80px;overflow-y:auto}
+.step-log span{display:block}
+.sl-ok{color:var(--green-text)}.sl-warn{color:var(--amber)}
+.btn{padding:7px 14px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer;transition:.15s;font-family:inherit;font-weight:500}
+.btn:hover{background:var(--bg)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:var(--green);color:#fff;border-color:transparent}
+.btn-primary:hover:not(:disabled){background:#15803d}
+.btn-sm{padding:4px 10px;font-size:11px}
+.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}
+/* VIEWER */
+.viewer-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.viewer-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.vp-hdr{padding:10px 14px;background:#f9fafb;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.vp-sel{font-size:11px;padding:4px 8px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-family:inherit;flex:1}
+.vp-body{min-height:200px;background:#f3f4f6}
+.vp-empty{display:flex;align-items:center;justify-content:center;min-height:200px;color:var(--text3);font-size:12px;flex-direction:column;gap:8px}
+.thumb-row{display:flex;gap:6px;padding:8px 10px;overflow-x:auto;background:#f9fafb;border-top:1px solid var(--border)}
+.thumb{width:50px;height:70px;object-fit:cover;border:2px solid var(--border);border-radius:4px;cursor:pointer;flex-shrink:0}
+.thumb.active{border-color:var(--green)}
+.thumb-add{width:50px;height:70px;border:2px dashed var(--border2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;color:var(--text3);background:#fafafa;flex-shrink:0}
+.thumb-add:hover{border-color:var(--green);color:var(--green)}
+/* MATCH */
+.match-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.ms-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;box-shadow:var(--shadow)}
+.ms-num{font-size:26px;font-weight:700;line-height:1}
+.ms-label{font-size:10px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:.3px}
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;padding:9px 10px;font-weight:500;font-size:11px;color:var(--text2);background:#f9fafb;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:9px 10px;border-bottom:1px solid #f9fafb;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#fafafa}
+.tbl tr.row-ok td{background:transparent}
+.tbl tr.row-prix td{background:#fffbeb}
+.tbl tr.row-qte td{background:#fff7ed}
+.tbl tr.row-manq td{background:#fef2f2}
+.sb{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap}
+.sb-ok{background:#dcfce7;color:#166534}
+.sb-prix{background:#fef9c3;color:#854d0e}
+.sb-qte{background:#ffedd5;color:#9a3412}
+.sb-manq{background:#fee2e2;color:#991b1b}
+.ean-ok{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:2px 6px;border-radius:8px;background:#dcfce7;color:#166534}
+.ean-nok{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:2px 6px;border-radius:8px;background:#fee2e2;color:#991b1b}
+.diff-neg{font-size:10px;padding:1px 5px;border-radius:6px;font-weight:600;background:var(--red-bg);color:var(--red-text)}
+.diff-pos{font-size:10px;padding:1px 5px;border-radius:6px;font-weight:600;background:var(--green-bg);color:var(--green-text)}
+.filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.filter-row input,.filter-row select{font-size:12px;padding:6px 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-family:inherit}
+.filter-row input{flex:1;min-width:140px}
+.cerp-banner{background:linear-gradient(135deg,#0f2d1f,#1a4731);color:#d1fae5;padding:12px 16px;border-radius:var(--radius-lg);margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:12px}
+.cerp-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:pulse 1.5s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* MODALS */
+.modal-wrap{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.4);align-items:flex-start;justify-content:center;padding-top:50px}
+.modal-wrap.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:22px;width:95%;max-width:540px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal-title{font-size:15px;font-weight:600}
+.x-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);line-height:1}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fl{font-size:11px;color:var(--text2);margin-bottom:2px}
+.fv{font-size:13px;font-weight:500}
+hr.div{border:none;border-top:1px solid var(--border);margin:14px 0}
+.abar{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.rapport-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.rapport-row:last-child{border-bottom:none}
+/* SCANNER */
+.scan-modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.5);align-items:center;justify-content:center}
+.scan-modal.open{display:flex}
+.scan-box{background:var(--surface);border-radius:var(--radius-lg);padding:20px;width:95%;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto}
+.dtype-row,.smode-row{display:flex;gap:6px;margin-bottom:12px}
+.dtype-btn,.smode-btn{flex:1;padding:7px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);font-size:11px;cursor:pointer;text-align:center;transition:.15s;font-family:inherit;font-weight:500}
+.dtype-btn.active,.smode-btn.active{border-color:var(--green);background:var(--green-bg);color:var(--green-text)}
+.cam-wrap{background:#000;border-radius:var(--radius);overflow:hidden;aspect-ratio:4/3;position:relative;margin-bottom:10px}
+#cam-video{width:100%;height:100%;object-fit:cover;display:none}
+.cam-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;opacity:.5;gap:6px;font-size:13px}
+#cam-canvas{display:none}
+#snap-preview{display:none;width:100%;border-radius:var(--radius);margin-bottom:10px}
+#scan-file-preview{display:none;width:100%;border-radius:var(--radius);margin-bottom:10px;max-height:200px;object-fit:contain}
+.pages-list{display:flex;gap:6px;flex-wrap:wrap;padding:8px;background:#f9fafb;border-radius:var(--radius);border:1px solid var(--border);min-height:60px;margin-bottom:8px}
+.page-card{position:relative;width:50px}
+.page-card img{width:50px;height:70px;object-fit:cover;border-radius:4px;border:2px solid var(--border)}
+.page-card .rm-pg{position:absolute;top:-5px;right:-5px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pages-add-btn{width:50px;height:70px;border:2px dashed var(--border2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;color:var(--text3);background:#fafafa}
+.pages-add-btn:hover{border-color:var(--green);color:var(--green)}
+.zip-drop{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:24px;text-align:center;cursor:pointer;transition:.15s;background:#fafafa;margin-bottom:12px}
+.zip-drop:hover,.zip-drop.drag{border-color:var(--green);background:var(--green-bg)}
+.toast{position:fixed;bottom:24px;right:24px;background:#0f2d1f;color:#4ade80;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;z-index:999;border:1px solid #16a34a;box-shadow:0 4px 20px rgba(0,0,0,.15);animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+input[type=file]{display:none}
+@media(max-width:750px){.doc-panels,.viewer-wrap{grid-template-columns:1fr}.metrics,.match-summary{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">↩ RetourMatch <span class="logo-badge">IA réelle</span></div>
+  <div class="topbar-right"><button class="btn btn-sm btn-primary" onclick="switchTab('rapport')">Rapport</button></div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('import')">Documents</div>
+  <div class="tab" onclick="switchTab('viewer')">Visualiser <span class="tcnt" id="tc-v">0</span></div>
+  <div class="tab" onclick="switchTab('matching')">Matching EAN <span class="tcnt" id="tc-m">0</span></div>
+  <div class="tab" onclick="switchTab('ecarts')">Écarts <span class="tcnt" id="tc-e">0</span></div>
+  <div class="tab" onclick="switchTab('rapport')">Rapport</div>
+</div>
+<div class="main">
+
+<!-- IMPORT -->
+<div id="tab-import" class="section active">
+  <div class="cerp-banner" id="cerp-banner" style="display:none">
+    <div class="cerp-dot"></div>
+    <div><div style="font-weight:600;color:#4ade80;font-size:13px">Extension CERP SAE</div><span id="cerp-count">0 avoir(s)</span></div>
+    <button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.1);color:#d1fae5;border-color:rgba(255,255,255,.2)" onclick="loadCerpAvoirs()">Charger</button>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Retours</div><div class="metric-val mv-blue" id="m-r">0</div></div>
+    <div class="metric"><div class="metric-label">Avoirs</div><div class="metric-val mv-blue" id="m-a">0</div></div>
+    <div class="metric"><div class="metric-label">Lignes extraites</div><div class="metric-val" id="m-l">0</div></div>
+    <div class="metric"><div class="metric-label">EAN ✓ Prix ✓</div><div class="metric-val mv-green" id="m-m">0</div></div>
+  </div>
+  <div class="doc-panels">
+    <div class="doc-panel">
+      <div class="panel-header"><span class="panel-badge pb-r">Bons de retour</span><span style="font-size:12px;font-weight:500;flex:1;color:#166534">OCP · CERP · Phoenix</span><span id="cnt-r" style="font-size:11px;color:var(--text2)">0 doc</span></div>
+      <div class="panel-body">
+        <div class="action-row">
+          <button class="abt" onclick="document.getElementById('fi-r').click()">📄 PDF</button>
+          <button class="abt" onclick="openZip('retour')">📦 ZIP</button>
+          <button class="abt" onclick="openScan('retour')">📷 Scanner</button>
+        </div>
+        <div class="upload-drop" id="zone-r" ondragover="dg(event,'r')" ondragleave="dl('r')" ondrop="dp(event,'r')" onclick="document.getElementById('fi-r').click()">
+          <div style="font-size:22px;margin-bottom:5px">📄</div>
+          <div style="font-size:12px;font-weight:600;margin-bottom:2px">Glisser-déposer les PDF</div>
+          <div style="font-size:11px;color:var(--text2)">ou cliquer · PDF et images acceptés</div>
+        </div>
+        <input type="file" id="fi-r" accept=".pdf,image/*" multiple onchange="addFiles(event,'retour')">
+        <div id="list-r"></div>
+      </div>
+    </div>
+    <div class="doc-panel">
+      <div class="panel-header"><span class="panel-badge pb-a">Avoirs reçus</span><span style="font-size:12px;font-weight:500;flex:1;color:var(--blue-text)">Factures d'avoir · Notes de crédit</span><span id="cnt-a" style="font-size:11px;color:var(--text2)">0 doc</span></div>
+      <div class="panel-body">
+        <div class="action-row">
+          <button class="abt" onclick="document.getElementById('fi-a').click()">🧾 PDF</button>
+          <button class="abt" onclick="openZip('avoir')">📦 ZIP</button>
+          <button class="abt" onclick="openScan('avoir')">📷 Scanner</button>
+        </div>
+        <div class="upload-drop" id="zone-a" ondragover="dg(event,'a')" ondragleave="dl('a')" ondrop="dp(event,'a')" onclick="document.getElementById('fi-a').click()">
+          <div style="font-size:22px;margin-bottom:5px">🧾</div>
+          <div style="font-size:12px;font-weight:600;margin-bottom:2px">Glisser-déposer les PDF</div>
+          <div style="font-size:11px;color:var(--text2)">ou cliquer · PDF et images acceptés</div>
+        </div>
+        <input type="file" id="fi-a" accept=".pdf,image/*" multiple onchange="addFiles(event,'avoir')">
+        <div id="list-a"></div>
+      </div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="btn-launch" onclick="lancerExtraction()" disabled>Lancer l'extraction IA + Matching EAN</button>
+    <span style="font-size:12px;color:var(--text2)">Claude extrait chaque ligne produit (EAN, prix, quantité) puis compare</span>
+  </div>
+  <div id="prog-wrap" style="display:none;margin-top:14px">
+    <div class="notify n-info" id="prog-msg">Initialisation...</div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:4px"><span id="prog-txt">En cours...</span><span id="prog-pct">0%</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="step-log" id="step-log"></div>
+  </div>
+</div>
+
+<!-- VIEWER -->
+<div id="tab-viewer" class="section">
+  <div class="viewer-wrap">
+    <div class="viewer-panel">
+      <div class="vp-hdr"><span class="panel-badge pb-r" style="flex-shrink:0">Retour</span><select class="vp-sel" id="vsel-r" onchange="loadViewerDoc('retour',this.value)"><option value="">— Choisir un bon de retour —</option></select></div>
+      <div class="vp-body" id="vbody-r"><div class="vp-empty"><span style="font-size:28px;opacity:.3">📄</span><span>Sélectionnez un document</span></div></div>
+      <div class="thumb-row" id="vthumbs-r"></div>
+    </div>
+    <div class="viewer-panel">
+      <div class="vp-hdr"><span class="panel-badge pb-a" style="flex-shrink:0">Avoir</span><select class="vp-sel" id="vsel-a" onchange="loadViewerDoc('avoir',this.value)"><option value="">— Choisir un avoir —</option></select></div>
+      <div class="vp-body" id="vbody-a"><div class="vp-empty"><span style="font-size:28px;opacity:.3">🧾</span><span>Sélectionnez un document</span></div></div>
+      <div class="thumb-row" id="vthumbs-a"></div>
+    </div>
+  </div>
+  <div id="viewer-lines-wrap" style="display:none">
+    <div class="notify n-info" id="vl-notify">Sélectionnez un retour ET un avoir pour comparer les lignes</div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr>
+          <th>EAN / CIP</th><th>Désignation (Retour)</th><th>Qté R</th><th>Prix U. HT (R)</th>
+          <th style="text-align:center">↔</th>
+          <th>Désignation (Avoir)</th><th>Qté A</th><th>Prix U. HT (A)</th>
+          <th>EAN</th><th>Prix</th><th>Résultat</th>
+        </tr></thead>
+        <tbody id="viewer-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MATCHING -->
+<div id="tab-matching" class="section">
+  <div class="match-summary">
+    <div class="ms-card"><div class="ms-num mv-green" id="ms-ok">0</div><div class="ms-label">EAN ✓ Prix ✓ Qté ✓</div></div>
+    <div class="ms-card"><div class="ms-num mv-amber" id="ms-prix">0</div><div class="ms-label">EAN ✓ Prix ≠</div></div>
+    <div class="ms-card"><div class="ms-num" style="color:var(--amber)" id="ms-qte">0</div><div class="ms-label">EAN ✓ Qté ≠</div></div>
+    <div class="ms-card"><div class="ms-num mv-red" id="ms-manq">0</div><div class="ms-label">EAN non trouvé</div></div>
+  </div>
+  <div id="match-notify" class="notify n-ok" style="display:none"></div>
+  <div class="filter-row">
+    <input id="sq" placeholder="EAN, produit..." oninput="filterM()">
+    <select id="sst" onchange="filterM()">
+      <option value="">Tous</option><option value="ok">EAN ✓ Prix ✓</option>
+      <option value="prix">Prix différent</option><option value="qte">Quantité différente</option>
+      <option value="manq">EAN non trouvé</option>
+    </select>
+    <button class="btn btn-sm btn-primary" onclick="validerExacts()">Valider les lignes OK</button>
+  </div>
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead><tr><th>EAN / CIP</th><th>Désignation</th><th>Qté R</th><th>Qté A</th><th>Prix U. HT (R)</th><th>Prix U. HT (A)</th><th>Écart prix</th><th>EAN</th><th>Statut</th><th></th></tr></thead>
+      <tbody id="match-body"><tr><td colspan="10" style="text-align:center;padding:32px;color:var(--text2)">Lancez l'extraction pour voir les résultats</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ÉCARTS -->
+<div id="tab-ecarts" class="section">
+  <div id="ecarts-content"><div style="text-align:center;padding:40px;color:var(--text2)">✓ Aucun écart détecté</div></div>
+</div>
+
+<!-- RAPPORT -->
+<div id="tab-rapport" class="section">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px">
+    <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:12px">SYNTHÈSE</div>
+    <div id="rapport-content"><div style="text-align:center;padding:24px;color:var(--text2)">Lancez le matching pour générer le rapport</div></div>
+  </div>
+  <button class="btn btn-primary" id="btn-export" onclick="exportRapport()" disabled>Exporter rapport (.txt)</button>
+</div>
+
+</div>
+
+<!-- MODAL DÉTAIL -->
+<div class="modal-wrap" id="modal">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title" id="modal-title">Détail</div><button class="x-btn" onclick="closeModal()">×</button></div>
+    <div id="modal-body"></div>
+    <div class="abar" id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- SCANNER -->
+<div class="scan-modal" id="scan-modal">
+  <div class="scan-box">
+    <div class="modal-hdr"><div class="modal-title" id="scan-title">Numériser</div><button class="x-btn" onclick="closeScan()">×</button></div>
+    <div class="dtype-row">
+      <button class="dtype-btn active" id="sdt-r" onclick="setScanType('retour')">Bon de retour</button>
+      <button class="dtype-btn" id="sdt-a" onclick="setScanType('avoir')">Avoir</button>
+    </div>
+    <div class="smode-row">
+      <button class="smode-btn active" id="sm-cam" onclick="setScanMode('cam')">📱 Caméra</button>
+      <button class="smode-btn" id="sm-file" onclick="setScanMode('file')">📁 Image</button>
+    </div>
+    <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Pages (<span id="pg-count">0</span>) — ajoutez autant de pages que nécessaire</div>
+    <div class="pages-list" id="pages-list"><div class="pages-add-btn" onclick="addNextPage()">+</div></div>
+    <div id="sec-cam">
+      <div class="cam-wrap"><video id="cam-video" autoplay playsinline></video><div class="cam-ph" id="cam-ph"><span style="font-size:36px">📷</span><span>Caméra inactive</span></div></div>
+      <canvas id="cam-canvas"></canvas>
+      <img id="snap-preview" alt="">
+      <div class="btn-row" style="justify-content:center">
+        <button class="btn btn-primary" id="btn-cam-start" onclick="startCam()">Démarrer</button>
+        <button class="btn" id="btn-snap" onclick="doSnap()" style="display:none">📸 Capturer</button>
+        <button class="btn" id="btn-retry" onclick="retryCam()" style="display:none">🔄 Reprendre</button>
+        <button class="btn btn-primary" id="btn-add-snap" onclick="addSnapPage()" style="display:none">+ Ajouter cette page</button>
+      </div>
+    </div>
+    <div id="sec-file" style="display:none">
+      <div class="upload-drop" onclick="document.getElementById('fi-scan').click()" style="padding:16px">
+        <div style="font-size:22px;margin-bottom:4px">🖼️</div>
+        <div style="font-size:12px;font-weight:600">Sélectionner une image</div>
+        <div style="font-size:11px;color:var(--text2)">JPG · PNG · Une page à la fois</div>
+      </div>
+      <input type="file" id="fi-scan" accept="image/*">
+      <img id="scan-file-preview" alt="">
+    </div>
+    <div class="btn-row" style="justify-content:flex-end;margin-top:12px">
+      <button class="btn" onclick="closeScan()">Annuler</button>
+      <button class="btn btn-primary" id="btn-use-doc" onclick="useScanDoc()" disabled>Utiliser ce document</button>
+    </div>
+  </div>
+</div>
+
+<!-- ZIP MODAL -->
+<div class="scan-modal" id="zip-modal">
+  <div class="scan-box" style="max-width:380px">
+    <div class="modal-hdr"><div class="modal-title" id="zip-title">Importer un ZIP</div><button class="x-btn" onclick="closeZip()">×</button></div>
+    <div class="dtype-row">
+      <button class="dtype-btn active" id="zdt-r" onclick="setZipType('retour')">Bons de retour</button>
+      <button class="dtype-btn" id="zdt-a" onclick="setZipType('avoir')">Avoirs</button>
+    </div>
+    <div class="zip-drop" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleZipDrop(event)" onclick="document.getElementById('fi-zip').click()">
+      <div style="font-size:28px;margin-bottom:6px">📦</div>
+      <div style="font-weight:600;font-size:13px;margin-bottom:3px">Glisser-déposer un ZIP</div>
+      <div style="font-size:11px;color:var(--text2)">Les PDFs à l'intérieur seront extraits</div>
+    </div>
+    <input type="file" id="fi-zip" accept=".zip" onchange="handleZipFile(event)">
+    <div id="zip-prog" style="display:none">
+      <div class="prog-bar"><div class="prog-fill" id="zip-fill" style="width:0%"></div></div>
+      <div id="zip-status" style="font-size:12px;color:var(--text2);text-align:center;margin-top:6px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const S={retours:[],avoirs:[],matches:[],validated:new Set()};
+let filteredM=[];
+
+function switchTab(t){
+  ['import','viewer','matching','ecarts','rapport'].forEach((id,i)=>{
+    document.querySelectorAll('.tab')[i].classList.toggle('active',id===t);
+    document.getElementById('tab-'+id).classList.toggle('active',id===t);
+  });
+  if(t==='viewer')refreshViewerSelects();
+  if(t==='matching')renderMatchTable();
+}
+
+function dg(e,z){e.preventDefault();document.getElementById('zone-'+z).classList.add('drag');}
+function dl(z){document.getElementById('zone-'+z).classList.remove('drag');}
+function dp(e,z){e.preventDefault();dl(z);if(e.dataTransfer?.files?.length)addFilesRaw(e.dataTransfer.files,z==='r'?'retour':'avoir');}
+function addFiles(e,type){addFilesRaw(e.target.files,type);}
+function addFilesRaw(files,type){
+  const arr=type==='retour'?S.retours:S.avoirs;
+  Array.from(files).forEach(f=>{if(!arr.find(x=>x.name===f.name))arr.push({name:f.name,file:f,status:'ready',pages:[]});});
+  renderList(type);updateMetrics();checkLaunch();
+}
+function removeDoc(type,name){
+  if(type==='retour')S.retours=S.retours.filter(x=>x.name!==name);
+  else S.avoirs=S.avoirs.filter(x=>x.name!==name);
+  renderList(type);updateMetrics();checkLaunch();refreshViewerSelects();
+}
+function renderList(type){
+  const arr=type==='retour'?S.retours:S.avoirs;
+  const id=type==='retour'?'list-r':'list-a';
+  const zone=type==='retour'?'zone-r':'zone-a';
+  const cnt=type==='retour'?'cnt-r':'cnt-a';
+  const stMap={ready:'ds-ready',loading:'ds-loading',done:'ds-done',error:'ds-err'};
+  const stLbl={ready:'Prêt',loading:'Analyse...',done:'Extrait',error:'Erreur'};
+  document.getElementById(id).innerHTML=arr.map(d=>`
+    <div class="doc-item" onclick="quickView('${type}','${d.name.replace(/'/g,"\\'")}')">
+      <div class="doc-name">${d.name}</div>
+      ${d.pages?.length>0?`<span style="font-size:10px;color:var(--text2)">${d.pages.length}p</span>`:''}
+      <div class="doc-st ${stMap[d.status]||'ds-ready'}">${stLbl[d.status]||'Prêt'}</div>
+      <button class="doc-rm" onclick="event.stopPropagation();removeDoc('${type}','${d.name.replace(/'/g,"\\'")}')">×</button>
+    </div>`).join('')||`<div style="text-align:center;padding:10px;font-size:11px;color:var(--text2)">Aucun document</div>`;
+  document.getElementById(cnt).textContent=`${arr.length} doc${arr.length>1?'s':''}`;
+  if(arr.length)document.getElementById(zone).classList.add('has-files');
+  else document.getElementById(zone).classList.remove('has-files');
+}
+function checkLaunch(){document.getElementById('btn-launch').disabled=!(S.retours.length>0&&S.avoirs.length>0);}
+function updateMetrics(){
+  document.getElementById('m-r').textContent=S.retours.length;
+  document.getElementById('m-a').textContent=S.avoirs.length;
+  document.getElementById('m-l').textContent=[...S.retours,...S.avoirs].reduce((s,d)=>s+(d.extracted?.lignes?.length||0),0);
+  document.getElementById('m-m').textContent=S.matches.filter(m=>m.ean_ok&&m.prix_ok&&m.qte_ok).length;
+  document.getElementById('tc-v').textContent=S.retours.length+S.avoirs.length;
+  document.getElementById('tc-m').textContent=S.matches.length;
+  document.getElementById('tc-e').textContent=S.matches.filter(m=>m.statut!=='ok').length;
+}
+
+// ── VIEWER ────────────────────────────────────────────────────────────────
+function refreshViewerSelects(){
+  ['retour','avoir'].forEach(type=>{
+    const arr=type==='retour'?S.retours:S.avoirs;
+    const sel=document.getElementById('vsel-'+type[0]);
+    const cur=sel.value;
+    sel.innerHTML=`<option value="">— Choisir —</option>`+arr.map(d=>`<option value="${d.name}" ${d.name===cur?'selected':''}>${d.name}</option>`).join('');
+    if(cur&&arr.find(x=>x.name===cur))loadViewerDoc(type,cur);
+  });
+  updateViewerLines();
+}
+function quickView(type,name){switchTab('viewer');setTimeout(()=>{const id=type[0];document.getElementById('vsel-'+id).value=name;loadViewerDoc(type,name);},50);}
+function loadViewerDoc(type,name){
+  const id=type[0];
+  const body=document.getElementById('vbody-'+id);
+  const thumbs=document.getElementById('vthumbs-'+id);
+  if(!name){body.innerHTML=`<div class="vp-empty"><span style="font-size:28px;opacity:.3">${type==='retour'?'📄':'🧾'}</span><span>Sélectionnez un document</span></div>`;thumbs.innerHTML='';updateViewerLines();return;}
+  const arr=type==='retour'?S.retours:S.avoirs;
+  const doc=arr.find(d=>d.name===name);
+  if(!doc)return;
+
+  // Si le doc vient de l'extension CERP (base64 sans file), reconstruire le file
+  if(!doc.file && doc.fromCerp && doc.meta?.base64){
+    const bin=atob(doc.meta.base64);
+    const bytes=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+    doc.file=new File([bytes],doc.name,{type:'application/pdf'});
+  }
+
+  if(doc.pages&&doc.pages.length>0){
+    body.innerHTML=doc.pages.map((p,i)=>`<img src="${p.url}" style="width:100%;display:block;border-bottom:1px solid var(--border)" id="pg${id}${i}">`).join('');
+    thumbs.innerHTML=doc.pages.map((p,i)=>`<img src="${p.url}" class="thumb ${i===0?'active':''}" onclick="scrollToPage('${id}',${i})">`).join('')+`<div class="thumb-add" title="Ajouter une page" onclick="addPageTo('${type}','${name}')">+</div>`;
+  } else if(doc.file){
+    const url=URL.createObjectURL(doc.file);
+    const mime=doc.file.type||'application/pdf';
+    if(mime.startsWith('image/')){
+      body.innerHTML=`<img src="${url}" style="width:100%;display:block">`;
+      thumbs.innerHTML=`<img src="${url}" class="thumb active"><div class="thumb-add" onclick="addPageTo('${type}','${name}')">+</div>`;
+    } else {
+      // PDF — iframe + lien direct
+      body.innerHTML=`<iframe src="${url}#toolbar=0" style="width:100%;height:520px;border:none;display:block"></iframe>`;
+      thumbs.innerHTML=`<div style="font-size:11px;color:var(--text2);padding:8px;display:flex;align-items:center;gap:8px">
+        <span>PDF</span>
+        <a href="${url}" target="_blank" style="color:var(--blue);font-weight:500">Ouvrir ↗</a>
+        <a href="${url}" download="${doc.name}" style="color:var(--green);font-weight:500">Télécharger ↓</a>
+      </div><div class="thumb-add" onclick="addPageTo('${type}','${name}')">+</div>`;
+    }
+  } else {
+    // Pas de fichier — afficher les métadonnées disponibles
+    const meta=doc.meta||{};
+    body.innerHTML=`<div class="vp-empty" style="padding:24px;text-align:left;align-items:flex-start">
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px">📄 ${doc.name}</div>
+      ${meta.num||meta.numPiece?`<div style="font-size:12px;margin-bottom:6px"><span style="color:var(--text2)">N° pièce :</span> <b>${meta.numPiece||meta.num||'—'}</b></div>`:''}
+      ${meta.date?`<div style="font-size:12px;margin-bottom:6px"><span style="color:var(--text2)">Date :</span> <b>${meta.date}</b></div>`:''}
+      ${meta.ht?`<div style="font-size:12px;margin-bottom:6px"><span style="color:var(--text2)">Montant HT :</span> <b>${meta.ht} €</b></div>`:''}
+      ${meta.entity||meta.grossiste?`<div style="font-size:12px;margin-bottom:6px"><span style="color:var(--text2)">Grossiste :</span> <b>${meta.entity||meta.grossiste}</b></div>`:''}
+      <div style="font-size:11px;color:var(--text3);margin-top:12px">PDF non disponible — uniquement les métadonnées CERP</div>
+    </div>`;
+    thumbs.innerHTML='';
+  }
+  updateViewerLines();
+}
+function scrollToPage(id,i){document.getElementById('pg'+id+i)?.scrollIntoView({behavior:'smooth'});}
+let _addPageTo=null;
+function addPageTo(type,name){_addPageTo={type,name};openScan(type);}
+
+function updateViewerLines(){
+  const rName=document.getElementById('vsel-r').value;
+  const aName=document.getElementById('vsel-a').value;
+  const wrap=document.getElementById('viewer-lines-wrap');
+  if(!rName||!aName){wrap.style.display='none';return;}
+  const rDoc=S.retours.find(d=>d.name===rName);
+  const aDoc=S.avoirs.find(d=>d.name===aName);
+  if(!rDoc?.extracted||!aDoc?.extracted){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  const rows=buildRows(rDoc.extracted.lignes||[],aDoc.extracted.lignes||[]);
+  const ok=rows.filter(r=>r.ean_ok&&r.prix_ok&&r.qte_ok).length;
+  const ec=rows.filter(r=>r.ean_ok&&(!r.prix_ok||!r.qte_ok)).length;
+  const mq=rows.filter(r=>!r.ean_ok).length;
+  const vn=document.getElementById('vl-notify');
+  vn.className=`notify ${mq>0||ec>0?'n-warn':'n-ok'}`;
+  vn.innerHTML=`<b>${rows.length}</b> ligne(s) — <b style="color:var(--green)">${ok}</b> parfaite(s) · <b style="color:var(--amber)">${ec}</b> écart(s) · <b style="color:var(--red)">${mq}</b> EAN introuvable(s)`;
+  document.getElementById('viewer-tbody').innerHTML=rows.map(row=>{
+    const eanHtml=row.ean_ok?`<span class="ean-ok">✓ EAN</span>`:`<span class="ean-nok">✗ EAN</span>`;
+    const prixClass=row.ean_ok?(row.prix_ok?'mv-green':'mv-red'):'';
+    const diffHtml=row.prix_diff!=null&&Math.abs(row.prix_diff)>0.001?`<span class="${row.prix_diff<0?'diff-neg':'diff-pos'}">${row.prix_diff>0?'+':''}${row.prix_diff.toFixed(2)} €</span>`:'';
+    const trClass=!row.ean_ok?'row-manq':(!row.prix_ok?'row-prix':(!row.qte_ok?'row-qte':'row-ok'));
+    return `<tr class="${trClass}">
+      <td style="font-family:monospace;font-size:10px;font-weight:600">${row.cip||'—'}</td>
+      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${row.r_desig||'—'}</td>
+      <td style="font-weight:${row.qte_ok?'400':'700'};color:${row.qte_ok?'inherit':'var(--amber)'}">${row.r_qte??'—'}</td>
+      <td class="${prixClass}">${row.r_prix!=null?row.r_prix.toFixed(2)+' €':'—'}</td>
+      <td style="text-align:center;color:var(--text3)">↔</td>
+      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${row.ean_ok?'inherit':'var(--text3)'}">${row.a_desig||'—'}</td>
+      <td style="font-weight:${row.qte_ok?'400':'700'};color:${row.qte_ok?'inherit':'var(--amber)'}">${row.a_qte??'—'}</td>
+      <td class="${prixClass}">${row.a_prix!=null?row.a_prix.toFixed(2)+' €':'—'} ${diffHtml}</td>
+      <td>${eanHtml}</td>
+      <td>${row.ean_ok?(row.prix_ok?`<span class="sb sb-ok">Prix ✓</span>`:`<span class="sb sb-prix">Prix ≠</span>`):'—'}</td>
+      <td>${!row.ean_ok?`<span class="sb sb-manq">Non trouvé</span>`:(row.ean_ok&&row.prix_ok&&row.qte_ok?`<span class="sb sb-ok">OK</span>`:`<span class="sb sb-prix">Écart</span>`)}</td>
+    </tr>`;
+  }).join('')||`<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--text2)">Aucune ligne extraite</td></tr>`;
+}
+
+// ── EXTRACTION ────────────────────────────────────────────────────────────
+function addLog(t,c=''){const el=document.getElementById('step-log');const s=document.createElement('span');if(c)s.className=c;s.textContent='› '+t;el.appendChild(s);el.scrollTop=el.scrollHeight;}
+function setProg(p,t){document.getElementById('prog-fill').style.width=p+'%';document.getElementById('prog-pct').textContent=p+'%';if(t)document.getElementById('prog-txt').textContent=t;}
+async function toB64(file){return new Promise((r,j)=>{const rd=new FileReader();rd.onload=()=>r(rd.result.split(',')[1]);rd.onerror=j;rd.readAsDataURL(file);});}
+
+async function extractDoc(doc,type){
+  const prompt=`Tu es expert en documents pharmaceutiques français. Analyse ce ${type==='retour'?'bon de retour grossiste (OCP/CERP/Phoenix)':'avoir reçu d\'un grossiste'}.
+Extrais TOUTES les lignes produit. Retourne UNIQUEMENT ce JSON sans texte autour :
+{"numero_document":"...","date":"JJ/MM/AAAA","grossiste":"OCP|CERP|Phoenix|Autre","type":"${type}","lignes":[{"cip":"EAN13 ou CIP 13 chiffres — OBLIGATOIRE","designation":"nom","quantite":0,"prix_unitaire_ht":0.00,"montant_ht":0.00,"lot":null,"peremption":null}],"total_ht":0.00}
+Le champ cip est le code EAN13/CIP à 13 chiffres — c'est le champ clé du rapprochement.`;
+  let blocks=[];
+  if(doc.pages&&doc.pages.length){
+    for(const p of doc.pages){const b=await toB64(p.file);blocks.push({type:'image',source:{type:'base64',media_type:p.file.type||'image/jpeg',data:b}});}
+  } else if(doc.file){
+    const b=await toB64(doc.file);
+    const mime=doc.file.type||'application/pdf';
+    blocks.push(mime.startsWith('image/')?{type:'image',source:{type:'base64',media_type:mime,data:b}}:{type:'document',source:{type:'base64',media_type:'application/pdf',data:b}});
+  }
+  blocks.push({type:'text',text:prompt});
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:blocks}]})});
+  const data=await resp.json();
+  const raw=data.content?.find(c=>c.type==='text')?.text||'{}';
+  try{return{...JSON.parse(raw.replace(/```json|```/g,'').trim()),_fileName:doc.name};}
+  catch(e){return{numero_document:doc.name,lignes:[],total_ht:0,_fileName:doc.name};}
+}
+
+async function lancerExtraction(){
+  document.getElementById('prog-wrap').style.display='block';
+  document.getElementById('btn-launch').disabled=true;
+  document.getElementById('step-log').innerHTML='';
+  const all=[...S.retours.map(d=>({...d,_type:'retour'})),...S.avoirs.map(d=>({...d,_type:'avoir'}))];
+  let done=0;
+  for(const doc of all){
+    if(!doc.file&&!(doc.pages?.length)){done++;continue;}
+    document.getElementById('prog-msg').textContent=`Analyse de ${doc.name}...`;
+    addLog(`Claude analyse : ${doc.name}`,'sl-warn');
+    doc.status='loading';renderList(doc._type);
+    try{
+      const r=await extractDoc(doc,doc._type);
+      doc.status='done';doc.extracted=r;
+      addLog(`✓ ${doc.name} — ${r.lignes?.length||0} ligne(s)`,'sl-ok');
+    }catch(e){doc.status='error';addLog(`✗ ${doc.name}`);}
+    done++;setProg(Math.round(done/all.length*70),`${done}/${all.length} analysé(s)`);
+    renderList(doc._type);updateMetrics();
+  }
+  document.getElementById('prog-msg').textContent='Matching EAN + prix...';
+  addLog('Matching en cours...','sl-warn');setProg(85,'Matching...');
+  runMatching();
+  setProg(100,'Terminé');
+  addLog(`Terminé — ${S.matches.length} ligne(s) analysée(s)`,'sl-ok');
+  document.getElementById('prog-msg').textContent=`Terminé — ${S.matches.length} ligne(s)`;
+  renderMatchTable();renderEcarts();renderRapport();updateMetrics();
+  document.getElementById('btn-export').disabled=false;
+  refreshViewerSelects();
+  setTimeout(()=>switchTab('matching'),600);
+}
+
+// ── MATCHING EAN ──────────────────────────────────────────────────────────
+function normEAN(s){if(!s)return null;const n=String(s).replace(/\D/g,'');return n.length>=12?n:null;}
+function simDesig(a,b){const c=s=>s.toLowerCase().replace(/[^a-z0-9]/g,'');const ca=c(a||''),cb=c(b||'');if(!ca||!cb||ca.length<4||cb.length<4)return false;return ca.includes(cb.slice(0,6))||cb.includes(ca.slice(0,6));}
+
+function buildRows(rLines,aLines){
+  const rows=[];const usedA=new Set();
+  for(const rl of rLines){
+    const ean=normEAN(rl.cip);
+    let al=null,ai=-1;
+    if(ean){ai=aLines.findIndex((a,i)=>!usedA.has(i)&&normEAN(a.cip)===ean);}
+    if(ai<0){ai=aLines.findIndex((a,i)=>!usedA.has(i)&&simDesig(rl.designation,a.designation));}
+    if(ai>=0){al=aLines[ai];usedA.add(ai);}
+    const ean_ok=al?normEAN(rl.cip)===normEAN(al.cip):false;
+    const rp=rl.prix_unitaire_ht!=null?+rl.prix_unitaire_ht:null;
+    const ap=al?.prix_unitaire_ht!=null?+al.prix_unitaire_ht:null;
+    const prix_ok=rp!=null&&ap!=null?Math.abs(rp-ap)<0.01:false;
+    const prix_diff=rp!=null&&ap!=null?ap-rp:null;
+    const qte_ok=rl.quantite!=null&&al?.quantite!=null?rl.quantite===al.quantite:false;
+    rows.push({cip:rl.cip||al?.cip,r_desig:rl.designation,a_desig:al?.designation,r_qte:rl.quantite,a_qte:al?.quantite,r_prix:rp,a_prix:ap,prix_diff,ean_ok,prix_ok,qte_ok,statut:!al?'manq':(!ean_ok||!prix_ok||!qte_ok)?'ecart':'ok'});
+  }
+  aLines.forEach((al,i)=>{if(!usedA.has(i)){rows.push({cip:al.cip,r_desig:'—',a_desig:al.designation,r_qte:null,a_qte:al.quantite,r_prix:null,a_prix:+al.prix_unitaire_ht||null,prix_diff:null,ean_ok:false,prix_ok:false,qte_ok:false,statut:'manq_avoir'});}});
+  return rows;
+}
+
+function runMatching(){
+  const rL=S.retours.flatMap(d=>(d.extracted?.lignes||[]).map(l=>({...l,_doc:d.extracted?.numero_document||d.name,_grossiste:d.extracted?.grossiste||'?'})));
+  const aL=S.avoirs.flatMap(d=>(d.extracted?.lignes||[]).map(l=>({...l,_doc:d.extracted?.numero_document||d.name,_grossiste:d.extracted?.grossiste||'?'})));
+  S.matches=buildRows(rL,aL);
+  document.getElementById('ms-ok').textContent=S.matches.filter(m=>m.ean_ok&&m.prix_ok&&m.qte_ok).length;
+  document.getElementById('ms-prix').textContent=S.matches.filter(m=>m.ean_ok&&!m.prix_ok).length;
+  document.getElementById('ms-qte').textContent=S.matches.filter(m=>m.ean_ok&&m.prix_ok&&!m.qte_ok).length;
+  document.getElementById('ms-manq').textContent=S.matches.filter(m=>!m.ean_ok).length;
+}
+
+function renderMatchTable(){
+  filteredM=[...S.matches];_renderM();
+  const n=document.getElementById('match-notify');
+  const ok=S.matches.filter(m=>m.ean_ok&&m.prix_ok&&m.qte_ok).length;
+  const ec=S.matches.filter(m=>m.statut==='ecart').length;
+  const mq=S.matches.filter(m=>m.statut==='manq'||m.statut==='manq_avoir').length;
+  n.style.display='block';
+  n.className=`notify ${ec||mq?'n-warn':'n-ok'}`;
+  n.innerHTML=`<b>${ok}</b> ligne(s) OK (EAN ✓ Prix ✓ Qté ✓) · <b>${ec}</b> écart(s) · <b>${mq}</b> EAN non trouvé(s)`;
+}
+
+function filterM(){
+  const q=document.getElementById('sq').value.toLowerCase();
+  const st=document.getElementById('sst').value;
+  filteredM=S.matches.filter(m=>{
+    const mq=!q||(m.cip||'').includes(q)||(m.r_desig||'').toLowerCase().includes(q)||(m.a_desig||'').toLowerCase().includes(q);
+    const ms=!st||(st==='ok'&&m.ean_ok&&m.prix_ok&&m.qte_ok)||(st==='prix'&&m.ean_ok&&!m.prix_ok)||(st==='qte'&&m.ean_ok&&m.prix_ok&&!m.qte_ok)||(st==='manq'&&!m.ean_ok);
+    return mq&&ms;
+  });_renderM();
+}
+
+function _renderM(){
+  const tbody=document.getElementById('match-body');
+  if(!filteredM.length){tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text2)">Aucune ligne</td></tr>`;return;}
+  tbody.innerHTML=filteredM.map(m=>{
+    const idx=S.matches.indexOf(m);
+    const eanHtml=m.ean_ok?`<span class="ean-ok">✓</span>`:`<span class="ean-nok">✗</span>`;
+    const diff=m.prix_diff!=null&&Math.abs(m.prix_diff)>0.001?`<span class="${m.prix_diff<0?'diff-neg':'diff-pos'}">${m.prix_diff>0?'+':''}${m.prix_diff.toFixed(2)} €</span>`:'—';
+    const sc=m.statut==='ok'?'sb-ok':(m.statut==='manq'||m.statut==='manq_avoir')?'sb-manq':!m.prix_ok?'sb-prix':!m.qte_ok?'sb-qte':'sb-ok';
+    const sl=m.statut==='ok'?'OK':(m.statut==='manq')?'EAN manquant':(m.statut==='manq_avoir')?'Avoir sans retour':!m.ean_ok?'EAN ✗':!m.prix_ok?'Prix ≠':!m.qte_ok?'Qté ≠':'Écart';
+    const tr=!m.ean_ok?'row-manq':!m.prix_ok?'row-prix':!m.qte_ok?'row-qte':'row-ok';
+    return `<tr class="${tr}">
+      <td style="font-family:monospace;font-size:10px;font-weight:600">${m.cip||'—'}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.r_desig||'—'}</td>
+      <td style="color:${m.qte_ok?'inherit':'var(--amber)'};font-weight:${m.qte_ok?400:700}">${m.r_qte??'—'}</td>
+      <td style="color:${m.qte_ok?'inherit':'var(--amber)'};font-weight:${m.qte_ok?400:700}">${m.a_qte??'—'}</td>
+      <td style="color:${m.prix_ok?'inherit':'var(--red)'}">${m.r_prix!=null?m.r_prix.toFixed(2)+' €':'—'}</td>
+      <td style="color:${m.prix_ok?'inherit':'var(--red)'};font-weight:${m.prix_ok?400:600}">${m.a_prix!=null?m.a_prix.toFixed(2)+' €':'—'}</td>
+      <td>${diff}</td><td>${eanHtml}</td>
+      <td><span class="sb ${sc}">${sl}</span></td>
+      <td><button class="btn btn-sm" onclick="openDetail(${idx})">Détail</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderEcarts(){
+  const ec=S.matches.filter(m=>m.statut!=='ok');
+  const el=document.getElementById('ecarts-content');
+  if(!ec.length){el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text2)">✓ Aucun écart — EAN et prix correspondent</div>`;return;}
+  el.innerHTML=`<div class="notify n-warn">${ec.length} ligne(s) avec anomalie</div>
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>EAN/CIP</th><th>Désignation</th><th>Anomalie</th><th>Détail</th><th>Statut</th><th></th></tr></thead>
+    <tbody>${ec.map(m=>{
+      const idx=S.matches.indexOf(m);
+      const pb=!m.ean_ok?'EAN introuvable':!m.prix_ok?'Prix différent':!m.qte_ok?'Quantité différente':'Autre';
+      const dt=!m.ean_ok?`CIP: ${m.cip||'?'}`:!m.prix_ok?`R: ${m.r_prix?.toFixed(2)||'?'} € → A: ${m.a_prix?.toFixed(2)||'?'} € (${m.prix_diff!=null?(m.prix_diff>0?'+':'')+m.prix_diff.toFixed(2):'?'} €)`:!m.qte_ok?`R: ${m.r_qte??'?'} → A: ${m.a_qte??'?'}`:'';
+      const sc=!m.ean_ok?'sb-manq':!m.prix_ok?'sb-prix':'sb-qte';
+      const tr=!m.ean_ok?'row-manq':!m.prix_ok?'row-prix':'row-qte';
+      return `<tr class="${tr}"><td style="font-family:monospace;font-size:10px;font-weight:600">${m.cip||'—'}</td><td>${m.r_desig||m.a_desig||'?'}</td><td style="font-weight:500">${pb}</td><td style="font-size:11px;color:var(--text2)">${dt}</td><td><span class="sb ${sc}">${pb.split(' ')[0]}</span></td><td><button class="btn btn-sm" onclick="openDetail(${idx})">Voir</button></td></tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+function renderRapport(){
+  const ok=S.matches.filter(m=>m.ean_ok&&m.prix_ok&&m.qte_ok).length;
+  const pe=S.matches.filter(m=>m.ean_ok&&!m.prix_ok).length;
+  const qe=S.matches.filter(m=>m.ean_ok&&m.prix_ok&&!m.qte_ok).length;
+  const mq=S.matches.filter(m=>!m.ean_ok).length;
+  const tR=S.matches.reduce((s,m)=>s+(m.r_prix&&m.r_qte?m.r_prix*m.r_qte:0),0);
+  const tA=S.matches.reduce((s,m)=>s+(m.a_prix&&m.a_qte?m.a_prix*m.a_qte:0),0);
+  const ecG=tA-tR;
+  const taux=S.matches.length>0?(ok/S.matches.length*100).toFixed(1):'—';
+  document.getElementById('rapport-content').innerHTML=`
+    <div class="rapport-row"><span>Total retours HT</span><strong>${tR.toFixed(2)} €</strong></div>
+    <div class="rapport-row"><span>Total avoirs HT</span><strong>${tA.toFixed(2)} €</strong></div>
+    <div class="rapport-row"><span>Écart global HT</span><strong style="color:${ecG<0?'var(--red)':ecG>0?'var(--green)':'var(--text2)'}">${ecG>=0?'+':''}${ecG.toFixed(2)} €</strong></div>
+    <div class="rapport-row"><span>Taux de concordance</span><strong style="color:var(--green)">${taux} %</strong></div>
+    <div class="rapport-row"><span>Lignes EAN ✓ Prix ✓ Qté ✓</span><strong style="color:var(--green)">${ok}</strong></div>
+    <div class="rapport-row"><span>Écarts de prix</span><strong style="color:${pe?'var(--red)':'inherit'}">${pe}</strong></div>
+    <div class="rapport-row"><span>Écarts de quantité</span><strong style="color:${qe?'var(--amber)':'inherit'}">${qe}</strong></div>
+    <div class="rapport-row"><span>EAN non trouvés</span><strong style="color:${mq?'var(--red)':'inherit'}">${mq}</strong></div>`;
+}
+
+function openDetail(idx){
+  const m=S.matches[idx];
+  document.getElementById('modal-title').textContent=m.r_desig||m.a_desig||'Détail';
+  document.getElementById('modal-body').innerHTML=`
+    <div class="two-col">
+      <div><div class="fl">EAN / CIP</div><div class="fv" style="font-family:monospace">${m.cip||'—'}</div></div>
+      <div><div class="fl">EAN trouvé dans l'avoir</div><div class="fv" style="color:${m.ean_ok?'var(--green)':'var(--red)'}">${m.ean_ok?'✓ Oui':'✗ Non'}</div></div>
+      <div><div class="fl">Désignation retour</div><div class="fv">${m.r_desig||'—'}</div></div>
+      <div><div class="fl">Désignation avoir</div><div class="fv" style="color:${m.ean_ok?'inherit':'var(--text2)'}">${m.a_desig||'—'}</div></div>
+      <div><div class="fl">Quantité R / A</div><div class="fv" style="color:${m.qte_ok?'inherit':'var(--amber)'}">${m.r_qte??'—'} / ${m.a_qte??'—'}${!m.qte_ok&&m.ean_ok?' ⚠️':''}</div></div>
+      <div><div class="fl">Prix U. HT R / A</div><div class="fv" style="color:${m.prix_ok?'inherit':'var(--red)'}">${m.r_prix!=null?m.r_prix.toFixed(2)+' €':'—'} / ${m.a_prix!=null?m.a_prix.toFixed(2)+' €':'—'}</div></div>
+    </div>
+    ${m.ean_ok&&!m.prix_ok?`<hr class="div"><div class="notify n-err"><b>Écart de prix : </b>${m.prix_diff!=null?(m.prix_diff>0?'+':'')+m.prix_diff.toFixed(2)+' €/unité':'?'}</div>`:''}
+    ${!m.ean_ok?`<hr class="div"><div class="notify n-err">EAN/CIP introuvable dans les avoirs — vérifiez le document</div>`:''}
+    ${m.ean_ok&&!m.qte_ok?`<hr class="div"><div class="notify n-warn"><b>Écart de quantité : </b>${m.r_qte??'?'} demandé(s) → ${m.a_qte??'?'} crédité(s)</div>`:''}`;
+  document.getElementById('modal-actions').innerHTML=`<button class="btn" onclick="closeModal()">Fermer</button><button class="btn btn-primary" onclick="cloturerM(${idx})">Valider</button>`;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function cloturerM(idx){S.matches[idx].statut='ok';S.validated.add(idx);closeModal();renderMatchTable();renderEcarts();updateMetrics();}
+function validerExacts(){let c=0;S.matches.forEach((m,i)=>{if(m.ean_ok&&m.prix_ok&&m.qte_ok){S.validated.add(i);c++;}});if(c){renderMatchTable();toast(`${c} ligne(s) validée(s)`);}else toast('Aucune ligne parfaite à valider');}
+function exportRapport(){
+  const lines=S.matches.map(m=>`${m.cip||'?'} | ${m.r_desig||'?'} | EAN:${m.ean_ok?'OK':'NOK'} | Prix R:${m.r_prix?.toFixed(2)||'?'}€ Prix A:${m.a_prix?.toFixed(2)||'?'}€ Écart:${m.prix_diff!=null?m.prix_diff.toFixed(2):'0'}€ | ${m.statut}`).join('\n');
+  const now=new Date().toLocaleDateString('fr-FR');
+  const b=new Blob([`RETOURMATCH — RAPPORT\nDate: ${now}\n${'='.repeat(50)}\n${document.getElementById('rapport-content').innerText}\n\n${'─'.repeat(50)}\n${lines}`],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`retourmatch_${now.replace(/\//g,'-')}.txt`;a.click();
+}
+
+// ── SCANNER ───────────────────────────────────────────────────────────────
+let _sType='retour',_sMode='cam',_sPages=[],_snapBlob=null,_camStream=null;
+function openScan(type){_sType=type;_sPages=[];document.getElementById('scan-modal').classList.add('open');document.getElementById('scan-title').textContent=`Numériser — ${type==='retour'?'Bon de retour':'Avoir'}`;document.getElementById('sdt-r').classList.toggle('active',type==='retour');document.getElementById('sdt-a').classList.toggle('active',type==='avoir');renderScanPages();resetCam();}
+function closeScan(){document.getElementById('scan-modal').classList.remove('open');stopCam();_addPageTo=null;}
+function setScanType(t){_sType=t;document.getElementById('sdt-r').classList.toggle('active',t==='retour');document.getElementById('sdt-a').classList.toggle('active',t==='avoir');}
+function setScanMode(m){_sMode=m;document.getElementById('sm-cam').classList.toggle('active',m==='cam');document.getElementById('sm-file').classList.toggle('active',m==='file');document.getElementById('sec-cam').style.display=m==='cam'?'block':'none';document.getElementById('sec-file').style.display=m==='file'?'block':'none';if(m==='cam')resetCam();}
+function renderScanPages(){const l=document.getElementById('pages-list');l.innerHTML=_sPages.map((p,i)=>`<div class="page-card"><img src="${p.url}"><button class="rm-pg" onclick="rmScanPage(${i})">×</button></div>`).join('')+`<div class="pages-add-btn" onclick="addNextPage()" title="Ajouter une page">+</div>`;document.getElementById('pg-count').textContent=_sPages.length;document.getElementById('btn-use-doc').disabled=_sPages.length===0;}
+function rmScanPage(i){_sPages.splice(i,1);renderScanPages();}
+function addNextPage(){if(_sMode==='cam')startCam();else document.getElementById('fi-scan').click();}
+async function startCam(){try{_camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});const v=document.getElementById('cam-video');v.srcObject=_camStream;v.style.display='block';document.getElementById('cam-ph').style.display='none';document.getElementById('btn-cam-start').style.display='none';document.getElementById('btn-snap').style.display='inline-block';document.getElementById('snap-preview').style.display='none';document.getElementById('btn-retry').style.display='none';document.getElementById('btn-add-snap').style.display='none';}catch(e){alert('Caméra : '+e.message);}}
+function doSnap(){const v=document.getElementById('cam-video');const c=document.getElementById('cam-canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);c.toBlob(b=>{_snapBlob=b;const p=document.getElementById('snap-preview');p.src=URL.createObjectURL(b);p.style.display='block';v.style.display='none';document.getElementById('btn-snap').style.display='none';document.getElementById('btn-retry').style.display='inline-block';document.getElementById('btn-add-snap').style.display='inline-block';},'image/jpeg',.92);}
+function retryCam(){_snapBlob=null;document.getElementById('cam-video').style.display='block';document.getElementById('snap-preview').style.display='none';document.getElementById('btn-snap').style.display='inline-block';document.getElementById('btn-retry').style.display='none';document.getElementById('btn-add-snap').style.display='none';}
+function addSnapPage(){if(!_snapBlob)return;const f=new File([_snapBlob],`page_${_sPages.length+1}.jpg`,{type:'image/jpeg'});_sPages.push({file:f,url:URL.createObjectURL(f)});renderScanPages();_snapBlob=null;document.getElementById('snap-preview').style.display='none';document.getElementById('btn-snap').style.display='inline-block';document.getElementById('btn-retry').style.display='none';document.getElementById('btn-add-snap').style.display='none';toast(`Page ${_sPages.length} ajoutée`);}
+function stopCam(){if(_camStream){_camStream.getTracks().forEach(t=>t.stop());_camStream=null;}}
+function resetCam(){stopCam();const v=document.getElementById('cam-video');v.style.display='none';document.getElementById('cam-ph').style.display='flex';document.getElementById('snap-preview').style.display='none';document.getElementById('btn-cam-start').style.display='inline-block';document.getElementById('btn-snap').style.display='none';document.getElementById('btn-retry').style.display='none';document.getElementById('btn-add-snap').style.display='none';}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('fi-scan').addEventListener('change',function(e){
+    const f=e.target.files[0];if(!f)return;
+    const url=URL.createObjectURL(f);
+    document.getElementById('scan-file-preview').src=url;document.getElementById('scan-file-preview').style.display='block';
+    _sPages.push({file:f,url});renderScanPages();this.value='';toast(`Page ${_sPages.length} ajoutée`);
+  });
+});
+function useScanDoc(){
+  if(!_sPages.length)return;
+  if(_addPageTo){
+    const arr=_addPageTo.type==='retour'?S.retours:S.avoirs;
+    const doc=arr.find(d=>d.name===_addPageTo.name);
+    if(doc){doc.pages=[...(doc.pages||[]),..._sPages];renderList(_addPageTo.type);}
+  } else {
+    const name=`scan_${_sType}_${Date.now()}.jpg`;
+    const arr=_sType==='retour'?S.retours:S.avoirs;
+    arr.push({name,file:_sPages[0].file,pages:[..._sPages],status:'ready'});
+    renderList(_sType);
+  }
+  updateMetrics();checkLaunch();closeScan();toast(`Document ajouté (${_sPages.length} page(s))`);
+}
+
+// ── ZIP ───────────────────────────────────────────────────────────────────
+let _zType='retour';
+function openZip(type){_zType=type;document.getElementById('zip-modal').classList.add('open');document.getElementById('zdt-r').classList.toggle('active',type==='retour');document.getElementById('zdt-a').classList.toggle('active',type==='avoir');document.getElementById('zip-prog').style.display='none';}
+function closeZip(){document.getElementById('zip-modal').classList.remove('open');}
+function setZipType(t){_zType=t;document.getElementById('zdt-r').classList.toggle('active',t==='retour');document.getElementById('zdt-a').classList.toggle('active',t==='avoir');}
+function handleZipDrop(e){e.preventDefault();document.getElementById('zip-drop').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)processZip(f);}
+function handleZipFile(e){const f=e.target.files[0];if(f)processZip(f);}
+async function processZip(zipFile){
+  document.getElementById('zip-prog').style.display='block';
+  const fill=document.getElementById('zip-fill'),status=document.getElementById('zip-status');
+  try{
+    if(typeof JSZip==='undefined')await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    const zip=await JSZip.loadAsync(zipFile);
+    const pdfs=Object.keys(zip.files).filter(n=>n.toLowerCase().endsWith('.pdf')&&!zip.files[n].dir);
+    if(!pdfs.length){status.textContent='Aucun PDF trouvé';return;}
+    let done=0;
+    for(const n of pdfs){
+      const blob=await zip.files[n].async('blob');
+      const sn=n.split('/').pop();
+      const f=new File([blob],sn,{type:'application/pdf'});
+      const arr=_zType==='retour'?S.retours:S.avoirs;
+      if(!arr.find(x=>x.name===sn))arr.push({name:sn,file:f,status:'ready',pages:[]});
+      done++;fill.style.width=(done/pdfs.length*100)+'%';status.textContent=`${done}/${pdfs.length}...`;
+    }
+    renderList(_zType);updateMetrics();checkLaunch();toast(`${done} PDF(s) importés`);setTimeout(closeZip,1000);
+  }catch(e){status.textContent='Erreur: '+e.message;}
+}
+function loadScript(src){return new Promise((r,j)=>{const s=document.createElement('script');s.src=src;s.onload=r;s.onerror=j;document.head.appendChild(s);});}
+
+// ── CERP BRIDGE ───────────────────────────────────────────────────────────
+function checkCerpExtension(){
+  if(new URLSearchParams(location.search).get('cerp')==='1')setTimeout(()=>{let n=0;const t=()=>{if(window.__cerpAvoirsPending?.length){autoLoadAvoirs(window.__cerpAvoirsPending);window.__cerpAvoirsPending=[];}else if(n++<25)setTimeout(t,300);};t();},600);
+  window.addEventListener('message',e=>{if(e.data?.type==='RETOURMATCH_AVOIRS'&&e.data.avoirs?.length)autoLoadAvoirs(e.data.avoirs);});
+}
+function autoLoadAvoirs(avoirs){
+  let n=0;
+  avoirs.forEach(a=>{
+    if(S.avoirs.find(x=>x.name===a.name))return;
+    if(a.base64){
+      // Reconstruire le File depuis le base64
+      const bin=atob(a.base64);
+      const bytes=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+      const blob=new Blob([bytes],{type:'application/pdf'});
+      const file=new File([blob],a.name,{type:'application/pdf'});
+      S.avoirs.push({name:a.name,file,status:'ready',pages:[],fromCerp:true,meta:a});
+    } else {
+      S.avoirs.push({name:a.name,file:null,status:'ready',pages:[],fromCerp:true,meta:a});
+    }
+    n++;
+  });
+  if(n>0){renderList('avoir');updateMetrics();checkLaunch();document.getElementById('cerp-banner').style.display='flex';document.getElementById('cerp-count').textContent=`${n} avoir(s) chargé(s)`;toast(`${n} avoir(s) CERP chargés`);}
+}
+function loadCerpAvoirs(){autoLoadAvoirs(window._cerpAvoirs||[]);}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent='✓ '+msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+
+checkCerpExtension();
+</script>
+</body>
+</html>
