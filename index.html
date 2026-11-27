@@ -1,6 +1,29 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<!-- PostHog (analytics, EU) : inactif tant que la clé phc_A_REMPLACER n'est pas remplacée -->
+<script>
+(function () {
+  var KEY = 'phc_A_REMPLACER';
+  if (!KEY || KEY.indexOf('A_REMPLACER') !== -1) return;
+  var s = document.createElement('script');
+  s.async = true; s.crossOrigin = 'anonymous';
+  s.src = 'https://eu-assets.i.posthog.com/static/array.full.js';
+  s.onload = function () {
+    if (!window.posthog || !window.posthog.init) return;
+    window.posthog.init(KEY, {
+      api_host: 'https://eu.i.posthog.com',
+      person_profiles: 'identified_only',
+      mask_all_text: true,
+      mask_all_element_attributes: true,
+      session_recording: { maskAllInputs: true, maskTextSelector: '*' }
+    });
+    window.posthog.register({ app: 'retourmatch' });
+  };
+  document.head.appendChild(s);
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RetourMatch — Rapprochement avoirs grossiste</title>
